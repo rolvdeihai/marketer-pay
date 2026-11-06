@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "Marketer Pay",
+    "slug": "marketer-pay",
+    "scheme": "marketerpay",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.yourname.marketerpay"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.yourname.marketerpay"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro", "output": "single"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-status-bar"
+    ]
+  }
+}

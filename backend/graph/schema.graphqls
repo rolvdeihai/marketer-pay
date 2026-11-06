@@ -1,0 +1,207 @@
+# backend/graph/schema.graphqls
+scalar Time
+scalar Int64
+
+"How the bonus is counted."
+enum BonusType {
+  "bonus = salesCount × bonusAmount"
+  PER_SALE
+  "bonus = floor(salesCount / salesPerBonus) × bonusAmount"
+  PER_X_SALES
+}
+
+type PayRule {
+  baseSalary: Int64!
+  bonusType: BonusType!
+  salesPerBonus: Int!
+  bonusAmount: Int64!
+  "Percent of the bonus paid when the target IS achieved (salary is also paid)."
+  bonusPctTargetMet: Int!
+  "Percent of the bonus paid when the target is NOT achieved (no salary)."
+  bonusPctTargetMissed: Int!
+}
+
+type Business {
+  id: ID!
+  name: String!
+  slug: String!
+  createdAt: Time!
+  rule: PayRule!
+}
+
+type BusinessRef {
+  id: ID!
+  name: String!
+}
+
+type Marketer {
+  id: ID!
+  name: String!
+  phone: String
+  active: Boolean!
+  businesses: [BusinessRef!]!
+}
+
+type Product {
+  id: ID!
+  businessId: ID!
+  businessName: String!
+  name: String!
+  price: Int64!
+}
+
+type Transaction {
+  id: ID!
+  businessId: ID!
+  businessName: String!
+  marketerId: ID!
+  marketerName: String!
+  productId: ID!
+  productName: String!
+  amount: Int64!
+  soldAt: Time!
+  note: String
+}
+
+"One marketer in one business for one month."
+type MarketerStat {
+  marketerId: ID!
+  marketerName: String!
+  businessId: ID!
+  businessName: String!
+  salesCount: Int!
+  revenue: Int64!
+  isPaid: Boolean!
+  paidTotal: Int64
+  paidAt: Time
+}
+
+type DashboardStats {
+  period: String!
+  totalSales: Int!
+  totalRevenue: Int64!
+  unpaidCount: Int!
+  topMarketers: [MarketerStat!]!
+}
+
+type PayoutPreview {
+  marketerId: ID!
+  marketerName: String!
+  businessId: ID!
+  businessName: String!
+  period: String!
+  salesCount: Int!
+  targetAchieved: Boolean!
+  baseSalary: Int64!
+  bonusRaw: Int64!
+  bonusPct: Int!
+  bonusFinal: Int64!
+  total: Int64!
+  ruleSummary: String!
+  alreadyPaid: Boolean!
+}
+
+type Payout {
+  id: ID!
+  marketerId: ID!
+  marketerName: String!
+  businessId: ID!
+  businessName: String!
+  period: String!
+  salesCount: Int!
+  targetAchieved: Boolean!
+  baseSalary: Int64!
+  bonusRaw: Int64!
+  bonusPct: Int!
+  bonusFinal: Int64!
+  total: Int64!
+  paidAt: Time!
+  paidBy: String
+}
+
+type AssistantReply {
+  text: String!
+  "A complete standalone HTML document (chart) or null."
+  html: String
+}
+
+# ---------- Inputs ----------
+input PayRuleInput {
+  baseSalary: Int64!
+  bonusType: BonusType!
+  salesPerBonus: Int!
+  bonusAmount: Int64!
+  bonusPctTargetMet: Int!
+  bonusPctTargetMissed: Int!
+}
+
+input BusinessInput {
+  name: String!
+  rule: PayRuleInput!
+}
+
+input MarketerInput {
+  name: String!
+  phone: String
+  "IDs of the businesses this marketer sells for."
+  businesses: [ID!]!
+}
+
+input ProductInput {
+  businessId: ID!
+  name: String!
+  price: Int64!
+}
+
+input TransactionInput {
+  businessId: ID!
+  marketerId: ID!
+  productId: ID!
+  "Defaults to the product price."
+  amount: Int64
+  "Defaults to now."
+  soldAt: Time
+  note: String
+}
+
+input PayInput {
+  marketerId: ID!
+  businessId: ID!
+  "YYYY-MM"
+  period: String!
+  targetAchieved: Boolean!
+}
+
+input ChatMessageInput {
+  "user | assistant"
+  role: String!
+  content: String!
+}
+
+input AskInput {
+  businessId: ID
+  messages: [ChatMessageInput!]!
+}
+
+# ---------- Operations ----------
+type Query {
+  businesses: [Business!]!
+  marketers(businessId: ID): [Marketer!]!
+  products(businessId: ID): [Product!]!
+  transactions(businessId: ID, period: String): [Transaction!]!
+  dashboard(businessId: ID, period: String!): DashboardStats!
+  payroll(businessId: ID, period: String!): [MarketerStat!]!
+  payoutPreview(input: PayInput!): PayoutPreview!
+  payouts(businessId: ID): [Payout!]!
+}
+
+type Mutation {
+  createBusiness(input: BusinessInput!): Business!
+  updatePayRule(businessId: ID!, input: PayRuleInput!): Business!
+  createMarketer(input: MarketerInput!): Marketer!
+  createProduct(input: ProductInput!): Product!
+  createTransaction(input: TransactionInput!): Transaction!
+  deleteTransaction(id: ID!): Boolean!
+  payMarketer(input: PayInput!): Payout!
+  askAssistant(input: AskInput!): AssistantReply!
+}

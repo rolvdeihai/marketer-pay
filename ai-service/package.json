@@ -1,0 +1,27 @@
+{
+  "name": "marketerpay-ai",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/dev-server.ts",
+    "reindex": "tsx src/reindex.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@google/genai": "^3.0.0",
+    "@langchain/core": "^1.3.5",
+    "@langchain/google-genai": "^2.3.4",
+    "@langchain/langgraph": "^1.7.1",
+    "@supabase/supabase-js": "^2.119.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "dotenv": "^18.0.9",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  }
+}
