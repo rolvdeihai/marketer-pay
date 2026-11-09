@@ -43,6 +43,13 @@ type ComplexityRoot struct {
 		Text func(childComplexity int) int
 	}
 
+	BonusRule struct {
+		BonusAmount   func(childComplexity int) int
+		BonusPct      func(childComplexity int) int
+		BonusType     func(childComplexity int) int
+		SalesPerBonus func(childComplexity int) int
+	}
+
 	Business struct {
 		CreatedAt func(childComplexity int) int
 		ID        func(childComplexity int) int
@@ -92,16 +99,16 @@ type ComplexityRoot struct {
 		CreateTransaction func(childComplexity int, input model.TransactionInput) int
 		DeleteTransaction func(childComplexity int, id string) int
 		PayMarketer       func(childComplexity int, input model.PayInput) int
+		RemoveBusiness    func(childComplexity int, id string) int
+		RemoveMarketer    func(childComplexity int, id string) int
+		RemoveProduct     func(childComplexity int, id string) int
 		UpdatePayRule     func(childComplexity int, businessID string, input model.PayRuleInput) int
 	}
 
 	PayRule struct {
-		BaseSalary           func(childComplexity int) int
-		BonusAmount          func(childComplexity int) int
-		BonusPctTargetMet    func(childComplexity int) int
-		BonusPctTargetMissed func(childComplexity int) int
-		BonusType            func(childComplexity int) int
-		SalesPerBonus        func(childComplexity int) int
+		BaseSalary   func(childComplexity int) int
+		TargetMet    func(childComplexity int) int
+		TargetMissed func(childComplexity int) int
 	}
 
 	Payout struct {
@@ -179,8 +186,11 @@ type ComplexityRoot struct {
 type MutationResolver interface {
 	CreateBusiness(ctx context.Context, input model.BusinessInput) (*model.Business, error)
 	UpdatePayRule(ctx context.Context, businessID string, input model.PayRuleInput) (*model.Business, error)
+	RemoveBusiness(ctx context.Context, id string) (model.RemoveResult, error)
 	CreateMarketer(ctx context.Context, input model.MarketerInput) (*model.Marketer, error)
+	RemoveMarketer(ctx context.Context, id string) (model.RemoveResult, error)
 	CreateProduct(ctx context.Context, input model.ProductInput) (*model.Product, error)
+	RemoveProduct(ctx context.Context, id string) (model.RemoveResult, error)
 	CreateTransaction(ctx context.Context, input model.TransactionInput) (*model.Transaction, error)
 	DeleteTransaction(ctx context.Context, id string) (bool, error)
 	PayMarketer(ctx context.Context, input model.PayInput) (*model.Payout, error)
@@ -227,6 +237,31 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.AssistantReply.Text(childComplexity), true
+
+	case "BonusRule.bonusAmount":
+		if e.ComplexityRoot.BonusRule.BonusAmount == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BonusRule.BonusAmount(childComplexity), true
+	case "BonusRule.bonusPct":
+		if e.ComplexityRoot.BonusRule.BonusPct == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BonusRule.BonusPct(childComplexity), true
+	case "BonusRule.bonusType":
+		if e.ComplexityRoot.BonusRule.BonusType == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BonusRule.BonusType(childComplexity), true
+	case "BonusRule.salesPerBonus":
+		if e.ComplexityRoot.BonusRule.SalesPerBonus == nil {
+			break
+		}
+
+		return e.ComplexityRoot.BonusRule.SalesPerBonus(childComplexity), true
 
 	case "Business.createdAt":
 		if e.ComplexityRoot.Business.CreatedAt == nil {
@@ -466,6 +501,39 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.Mutation.PayMarketer(childComplexity, args["input"].(model.PayInput)), true
+	case "Mutation.removeBusiness":
+		if e.ComplexityRoot.Mutation.RemoveBusiness == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_removeBusiness_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.RemoveBusiness(childComplexity, args["id"].(string)), true
+	case "Mutation.removeMarketer":
+		if e.ComplexityRoot.Mutation.RemoveMarketer == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_removeMarketer_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.RemoveMarketer(childComplexity, args["id"].(string)), true
+	case "Mutation.removeProduct":
+		if e.ComplexityRoot.Mutation.RemoveProduct == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_removeProduct_args(ctx, rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.ComplexityRoot.Mutation.RemoveProduct(childComplexity, args["id"].(string)), true
 	case "Mutation.updatePayRule":
 		if e.ComplexityRoot.Mutation.UpdatePayRule == nil {
 			break
@@ -484,36 +552,18 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.PayRule.BaseSalary(childComplexity), true
-	case "PayRule.bonusAmount":
-		if e.ComplexityRoot.PayRule.BonusAmount == nil {
+	case "PayRule.targetMet":
+		if e.ComplexityRoot.PayRule.TargetMet == nil {
 			break
 		}
 
-		return e.ComplexityRoot.PayRule.BonusAmount(childComplexity), true
-	case "PayRule.bonusPctTargetMet":
-		if e.ComplexityRoot.PayRule.BonusPctTargetMet == nil {
+		return e.ComplexityRoot.PayRule.TargetMet(childComplexity), true
+	case "PayRule.targetMissed":
+		if e.ComplexityRoot.PayRule.TargetMissed == nil {
 			break
 		}
 
-		return e.ComplexityRoot.PayRule.BonusPctTargetMet(childComplexity), true
-	case "PayRule.bonusPctTargetMissed":
-		if e.ComplexityRoot.PayRule.BonusPctTargetMissed == nil {
-			break
-		}
-
-		return e.ComplexityRoot.PayRule.BonusPctTargetMissed(childComplexity), true
-	case "PayRule.bonusType":
-		if e.ComplexityRoot.PayRule.BonusType == nil {
-			break
-		}
-
-		return e.ComplexityRoot.PayRule.BonusType(childComplexity), true
-	case "PayRule.salesPerBonus":
-		if e.ComplexityRoot.PayRule.SalesPerBonus == nil {
-			break
-		}
-
-		return e.ComplexityRoot.PayRule.SalesPerBonus(childComplexity), true
+		return e.ComplexityRoot.PayRule.TargetMissed(childComplexity), true
 
 	case "Payout.baseSalary":
 		if e.ComplexityRoot.Payout.BaseSalary == nil {
@@ -878,6 +928,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	inputUnmarshalers := func() *graphql.InputUnmarshalerIndex {
 		return graphql.NewInputUnmarshalerIndex(
 			graphql.NewInputUnmarshaler("AskInput", ec.unmarshalInputAskInput),
+			graphql.NewInputUnmarshaler("BonusRuleInput", ec.unmarshalInputBonusRuleInput),
 			graphql.NewInputUnmarshaler("BusinessInput", ec.unmarshalInputBusinessInput),
 			graphql.NewInputUnmarshaler("ChatMessageInput", ec.unmarshalInputChatMessageInput),
 			graphql.NewInputUnmarshaler("MarketerInput", ec.unmarshalInputMarketerInput),
@@ -990,6 +1041,20 @@ func (ec *executionContext) childFields_AssistantReply(ctx context.Context, fiel
 	return nil, fmt.Errorf("no field named %q was found under type AssistantReply", field.Name)
 }
 
+func (ec *executionContext) childFields_BonusRule(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+	switch field.Name {
+	case "bonusType":
+		return ec.fieldContext_BonusRule_bonusType(ctx, field)
+	case "salesPerBonus":
+		return ec.fieldContext_BonusRule_salesPerBonus(ctx, field)
+	case "bonusAmount":
+		return ec.fieldContext_BonusRule_bonusAmount(ctx, field)
+	case "bonusPct":
+		return ec.fieldContext_BonusRule_bonusPct(ctx, field)
+	}
+	return nil, fmt.Errorf("no field named %q was found under type BonusRule", field.Name)
+}
+
 func (ec *executionContext) childFields_Business(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 	switch field.Name {
 	case "id":
@@ -1076,16 +1141,10 @@ func (ec *executionContext) childFields_PayRule(ctx context.Context, field graph
 	switch field.Name {
 	case "baseSalary":
 		return ec.fieldContext_PayRule_baseSalary(ctx, field)
-	case "bonusType":
-		return ec.fieldContext_PayRule_bonusType(ctx, field)
-	case "salesPerBonus":
-		return ec.fieldContext_PayRule_salesPerBonus(ctx, field)
-	case "bonusAmount":
-		return ec.fieldContext_PayRule_bonusAmount(ctx, field)
-	case "bonusPctTargetMet":
-		return ec.fieldContext_PayRule_bonusPctTargetMet(ctx, field)
-	case "bonusPctTargetMissed":
-		return ec.fieldContext_PayRule_bonusPctTargetMissed(ctx, field)
+	case "targetMet":
+		return ec.fieldContext_PayRule_targetMet(ctx, field)
+	case "targetMissed":
+		return ec.fieldContext_PayRule_targetMissed(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type PayRule", field.Name)
 }
@@ -1416,6 +1475,48 @@ func (ec *executionContext) field_Mutation_payMarketer_args(ctx context.Context,
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_removeBusiness_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_removeMarketer_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_removeProduct_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
+	var err error
+	args := map[string]any{}
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "id",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNID2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_updatePayRule_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
@@ -1692,6 +1793,98 @@ func (ec *executionContext) _AssistantReply_html(ctx context.Context, field grap
 }
 func (ec *executionContext) fieldContext_AssistantReply_html(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	return graphql.NewScalarFieldContext("AssistantReply", field, false, false, "String")
+}
+
+func (ec *executionContext) _BonusRule_bonusType(ctx context.Context, field graphql.CollectedField, obj *model.BonusRule) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_BonusRule_bonusType(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BonusType, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v model.BonusType) graphql.Marshaler {
+			return ec.marshalNBonusType2marketerpayᚋgraphᚋmodelᚐBonusType(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_BonusRule_bonusType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("BonusRule", field, false, false, "BonusType")
+}
+
+func (ec *executionContext) _BonusRule_salesPerBonus(ctx context.Context, field graphql.CollectedField, obj *model.BonusRule) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_BonusRule_salesPerBonus(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.SalesPerBonus, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_BonusRule_salesPerBonus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("BonusRule", field, false, false, "Int")
+}
+
+func (ec *executionContext) _BonusRule_bonusAmount(ctx context.Context, field graphql.CollectedField, obj *model.BonusRule) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_BonusRule_bonusAmount(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BonusAmount, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
+			return ec.marshalNInt642int64(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_BonusRule_bonusAmount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("BonusRule", field, false, false, "Int64")
+}
+
+func (ec *executionContext) _BonusRule_bonusPct(ctx context.Context, field graphql.CollectedField, obj *model.BonusRule) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_BonusRule_bonusPct(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.BonusPct, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
+			return ec.marshalNInt2int(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_BonusRule_bonusPct(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("BonusRule", field, false, false, "Int")
 }
 
 func (ec *executionContext) _Business_id(ctx context.Context, field graphql.CollectedField, obj *model.Business) (ret graphql.Marshaler) {
@@ -2407,6 +2600,50 @@ func (ec *executionContext) fieldContext_Mutation_updatePayRule(ctx context.Cont
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_removeBusiness(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_removeBusiness(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().RemoveBusiness(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v model.RemoveResult) graphql.Marshaler {
+			return ec.marshalNRemoveResult2marketerpayᚋgraphᚋmodelᚐRemoveResult(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_removeBusiness(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type RemoveResult does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_removeBusiness_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_createMarketer(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -2451,6 +2688,50 @@ func (ec *executionContext) fieldContext_Mutation_createMarketer(ctx context.Con
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_removeMarketer(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_removeMarketer(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().RemoveMarketer(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v model.RemoveResult) graphql.Marshaler {
+			return ec.marshalNRemoveResult2marketerpayᚋgraphᚋmodelᚐRemoveResult(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_removeMarketer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type RemoveResult does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_removeMarketer_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_createProduct(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -2489,6 +2770,50 @@ func (ec *executionContext) fieldContext_Mutation_createProduct(ctx context.Cont
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_createProduct_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return fc, err
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_removeProduct(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_Mutation_removeProduct(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			fc := graphql.GetFieldContext(ctx)
+			return ec.Resolvers.Mutation().RemoveProduct(ctx, fc.Args["id"].(string))
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v model.RemoveResult) graphql.Marshaler {
+			return ec.marshalNRemoveResult2marketerpayᚋgraphᚋmodelᚐRemoveResult(ctx, selections, v)
+		},
+		true,
+		true,
+	)
+}
+func (ec *executionContext) fieldContext_Mutation_removeProduct(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type RemoveResult does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_removeProduct_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -2694,119 +3019,68 @@ func (ec *executionContext) fieldContext_PayRule_baseSalary(_ context.Context, f
 	return graphql.NewScalarFieldContext("PayRule", field, false, false, "Int64")
 }
 
-func (ec *executionContext) _PayRule_bonusType(ctx context.Context, field graphql.CollectedField, obj *model.PayRule) (ret graphql.Marshaler) {
+func (ec *executionContext) _PayRule_targetMet(ctx context.Context, field graphql.CollectedField, obj *model.PayRule) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
 		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_PayRule_bonusType(ctx, field)
+			return ec.fieldContext_PayRule_targetMet(ctx, field)
 		},
 		func(ctx context.Context) (any, error) {
-			return obj.BonusType, nil
+			return obj.TargetMet, nil
 		},
 		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v model.BonusType) graphql.Marshaler {
-			return ec.marshalNBonusType2marketerpayᚋgraphᚋmodelᚐBonusType(ctx, selections, v)
+		func(ctx context.Context, selections ast.SelectionSet, v *model.BonusRule) graphql.Marshaler {
+			return ec.marshalNBonusRule2ᚖmarketerpayᚋgraphᚋmodelᚐBonusRule(ctx, selections, v)
 		},
 		true,
 		true,
 	)
 }
-func (ec *executionContext) fieldContext_PayRule_bonusType(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("PayRule", field, false, false, "BonusType")
+func (ec *executionContext) fieldContext_PayRule_targetMet(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PayRule",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_BonusRule(ctx, field)
+		},
+	}
+	return fc, nil
 }
 
-func (ec *executionContext) _PayRule_salesPerBonus(ctx context.Context, field graphql.CollectedField, obj *model.PayRule) (ret graphql.Marshaler) {
+func (ec *executionContext) _PayRule_targetMissed(ctx context.Context, field graphql.CollectedField, obj *model.PayRule) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
 		ec.OperationContext,
 		field,
 		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_PayRule_salesPerBonus(ctx, field)
+			return ec.fieldContext_PayRule_targetMissed(ctx, field)
 		},
 		func(ctx context.Context) (any, error) {
-			return obj.SalesPerBonus, nil
+			return obj.TargetMissed, nil
 		},
 		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
-			return ec.marshalNInt2int(ctx, selections, v)
+		func(ctx context.Context, selections ast.SelectionSet, v *model.BonusRule) graphql.Marshaler {
+			return ec.marshalNBonusRule2ᚖmarketerpayᚋgraphᚋmodelᚐBonusRule(ctx, selections, v)
 		},
 		true,
 		true,
 	)
 }
-func (ec *executionContext) fieldContext_PayRule_salesPerBonus(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("PayRule", field, false, false, "Int")
-}
-
-func (ec *executionContext) _PayRule_bonusAmount(ctx context.Context, field graphql.CollectedField, obj *model.PayRule) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_PayRule_bonusAmount(ctx, field)
+func (ec *executionContext) fieldContext_PayRule_targetMissed(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PayRule",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.childFields_BonusRule(ctx, field)
 		},
-		func(ctx context.Context) (any, error) {
-			return obj.BonusAmount, nil
-		},
-		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v int64) graphql.Marshaler {
-			return ec.marshalNInt642int64(ctx, selections, v)
-		},
-		true,
-		true,
-	)
-}
-func (ec *executionContext) fieldContext_PayRule_bonusAmount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("PayRule", field, false, false, "Int64")
-}
-
-func (ec *executionContext) _PayRule_bonusPctTargetMet(ctx context.Context, field graphql.CollectedField, obj *model.PayRule) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_PayRule_bonusPctTargetMet(ctx, field)
-		},
-		func(ctx context.Context) (any, error) {
-			return obj.BonusPctTargetMet, nil
-		},
-		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
-			return ec.marshalNInt2int(ctx, selections, v)
-		},
-		true,
-		true,
-	)
-}
-func (ec *executionContext) fieldContext_PayRule_bonusPctTargetMet(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("PayRule", field, false, false, "Int")
-}
-
-func (ec *executionContext) _PayRule_bonusPctTargetMissed(ctx context.Context, field graphql.CollectedField, obj *model.PayRule) (ret graphql.Marshaler) {
-	return graphql.ResolveField(
-		ctx,
-		ec.OperationContext,
-		field,
-		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return ec.fieldContext_PayRule_bonusPctTargetMissed(ctx, field)
-		},
-		func(ctx context.Context) (any, error) {
-			return obj.BonusPctTargetMissed, nil
-		},
-		nil,
-		func(ctx context.Context, selections ast.SelectionSet, v int) graphql.Marshaler {
-			return ec.marshalNInt2int(ctx, selections, v)
-		},
-		true,
-		true,
-	)
-}
-func (ec *executionContext) fieldContext_PayRule_bonusPctTargetMissed(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	return graphql.NewScalarFieldContext("PayRule", field, false, false, "Int")
+	}
+	return fc, nil
 }
 
 func (ec *executionContext) _Payout_id(ctx context.Context, field graphql.CollectedField, obj *model.Payout) (ret graphql.Marshaler) {
@@ -5359,6 +5633,69 @@ func UnmarshalAskInput(ctx context.Context, raw any) (model.AskInput, error) {
 	return out, err
 }
 
+func (ec *executionContext) unmarshalInputBonusRuleInput(ctx context.Context, obj any) (model.BonusRuleInput, error) {
+	var it model.BonusRuleInput
+	if obj == nil {
+		return it, nil
+	}
+
+	asMap := map[string]any{}
+	for k, v := range obj.(map[string]any) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"bonusType", "salesPerBonus", "bonusAmount", "bonusPct"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "bonusType":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bonusType"))
+			data, err := ec.unmarshalNBonusType2marketerpayᚋgraphᚋmodelᚐBonusType(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BonusType = data
+		case "salesPerBonus":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("salesPerBonus"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.SalesPerBonus = data
+		case "bonusAmount":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bonusAmount"))
+			data, err := ec.unmarshalNInt642int64(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BonusAmount = data
+		case "bonusPct":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bonusPct"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BonusPct = data
+		}
+	}
+	return it, nil
+}
+
+// UnmarshalBonusRuleInput unmarshals raw into the BonusRuleInput input type, using the
+// unmarshaler bound to ctx's request. Call it from a resolver to decode an input
+// object that was not passed as a field argument.
+//
+// ctx must come from a gqlgen request; outside one there is no unmarshaler to use
+// and the returned error says so.
+func UnmarshalBonusRuleInput(ctx context.Context, raw any) (model.BonusRuleInput, error) {
+	var out model.BonusRuleInput
+	err := graphql.UnmarshalNamedInputFromContext(ctx, "BonusRuleInput", raw, &out)
+	return out, err
+}
+
 func (ec *executionContext) unmarshalInputBusinessInput(ctx context.Context, obj any) (model.BusinessInput, error) {
 	var it model.BusinessInput
 	if obj == nil {
@@ -5587,7 +5924,7 @@ func (ec *executionContext) unmarshalInputPayRuleInput(ctx context.Context, obj 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"baseSalary", "bonusType", "salesPerBonus", "bonusAmount", "bonusPctTargetMet", "bonusPctTargetMissed"}
+	fieldsInOrder := [...]string{"baseSalary", "targetMet", "targetMissed"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -5601,41 +5938,20 @@ func (ec *executionContext) unmarshalInputPayRuleInput(ctx context.Context, obj 
 				return it, err
 			}
 			it.BaseSalary = data
-		case "bonusType":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bonusType"))
-			data, err := ec.unmarshalNBonusType2marketerpayᚋgraphᚋmodelᚐBonusType(ctx, v)
+		case "targetMet":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetMet"))
+			data, err := ec.unmarshalNBonusRuleInput2ᚖmarketerpayᚋgraphᚋmodelᚐBonusRuleInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.BonusType = data
-		case "salesPerBonus":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("salesPerBonus"))
-			data, err := ec.unmarshalNInt2int(ctx, v)
+			it.TargetMet = data
+		case "targetMissed":
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("targetMissed"))
+			data, err := ec.unmarshalNBonusRuleInput2ᚖmarketerpayᚋgraphᚋmodelᚐBonusRuleInput(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.SalesPerBonus = data
-		case "bonusAmount":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bonusAmount"))
-			data, err := ec.unmarshalNInt642int64(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.BonusAmount = data
-		case "bonusPctTargetMet":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bonusPctTargetMet"))
-			data, err := ec.unmarshalNInt2int(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.BonusPctTargetMet = data
-		case "bonusPctTargetMissed":
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bonusPctTargetMissed"))
-			data, err := ec.unmarshalNInt2int(ctx, v)
-			if err != nil {
-				return it, err
-			}
-			it.BonusPctTargetMissed = data
+			it.TargetMissed = data
 		}
 	}
 	return it, nil
@@ -5813,6 +6129,54 @@ func (ec *executionContext) _AssistantReply(ctx context.Context, sel ast.Selecti
 		case "html":
 			out.Values[i] = ec._AssistantReply_html(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	if n := len(deferred.Defers); n > 0 {
+		atomic.AddInt32(&ec.Deferred, int32(min(n, math.MaxInt32)))
+		ec.ProcessDeferredGroup(deferred)
+	}
+
+	return out
+}
+
+var bonusRuleImplementors = []string{"BonusRule"}
+
+func (ec *executionContext) _BonusRule(ctx context.Context, sel ast.SelectionSet, obj *model.BonusRule) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, bonusRuleImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := graphql.NewDeferredGroup(ctx)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("BonusRule")
+		case "bonusType":
+			out.Values[i] = ec._BonusRule_bonusType(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "salesPerBonus":
+			out.Values[i] = ec._BonusRule_salesPerBonus(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "bonusAmount":
+			out.Values[i] = ec._BonusRule_bonusAmount(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "bonusPct":
+			out.Values[i] = ec._BonusRule_bonusPct(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
 		default:
@@ -6135,6 +6499,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "removeBusiness":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_removeBusiness(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "createMarketer":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createMarketer(ctx, field)
@@ -6142,9 +6513,23 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		case "removeMarketer":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_removeMarketer(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "createProduct":
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createProduct(ctx, field)
+			})
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "removeProduct":
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_removeProduct(ctx, field)
 			})
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
@@ -6210,28 +6595,13 @@ func (ec *executionContext) _PayRule(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "bonusType":
-			out.Values[i] = ec._PayRule_bonusType(ctx, field, obj)
+		case "targetMet":
+			out.Values[i] = ec._PayRule_targetMet(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
-		case "salesPerBonus":
-			out.Values[i] = ec._PayRule_salesPerBonus(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "bonusAmount":
-			out.Values[i] = ec._PayRule_bonusAmount(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "bonusPctTargetMet":
-			out.Values[i] = ec._PayRule_bonusPctTargetMet(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				out.Invalids++
-			}
-		case "bonusPctTargetMissed":
-			out.Values[i] = ec._PayRule_bonusPctTargetMissed(ctx, field, obj)
+		case "targetMissed":
+			out.Values[i] = ec._PayRule_targetMissed(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -7057,6 +7427,19 @@ func (ec *executionContext) marshalNAssistantReply2ᚖmarketerpayᚋgraphᚋmode
 	return ec._AssistantReply(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNBonusRule2ᚖmarketerpayᚋgraphᚋmodelᚐBonusRule(ctx context.Context, sel ast.SelectionSet, v *model.BonusRule) graphql.Marshaler {
+	if v == nil {
+		graphql.AddInvalidNullError(ctx, "BonusRule!")
+		return graphql.Null
+	}
+	return ec._BonusRule(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNBonusRuleInput2ᚖmarketerpayᚋgraphᚋmodelᚐBonusRuleInput(ctx context.Context, v any) (*model.BonusRuleInput, error) {
+	res, err := ec.unmarshalInputBonusRuleInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNBonusType2marketerpayᚋgraphᚋmodelᚐBonusType(ctx context.Context, v any) (model.BonusType, error) {
 	var res model.BonusType
 	err := res.UnmarshalGQL(v)
@@ -7367,6 +7750,16 @@ func (ec *executionContext) marshalNProduct2ᚖmarketerpayᚋgraphᚋmodelᚐPro
 func (ec *executionContext) unmarshalNProductInput2marketerpayᚋgraphᚋmodelᚐProductInput(ctx context.Context, v any) (model.ProductInput, error) {
 	res, err := ec.unmarshalInputProductInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNRemoveResult2marketerpayᚋgraphᚋmodelᚐRemoveResult(ctx context.Context, v any) (model.RemoveResult, error) {
+	var res model.RemoveResult
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNRemoveResult2marketerpayᚋgraphᚋmodelᚐRemoveResult(ctx context.Context, sel ast.SelectionSet, v model.RemoveResult) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v any) (string, error) {

@@ -2,7 +2,8 @@
 import { useState } from "react";
 import { Text } from "react-native";
 import { useMutation, useQuery } from "@apollo/client/react";
-import { CREATE_PRODUCT, PRODUCTS } from "@/lib/graphql";
+import { CREATE_PRODUCT, PRODUCTS, REMOVE_PRODUCT } from "@/lib/graphql";
+import { confirmRemove } from "@/lib/dialogs";
 import type { Product } from "@/lib/types";
 import { useFilter } from "@/context/FilterContext";
 import { formatIDR } from "@/lib/format";
@@ -13,6 +14,7 @@ export default function Products() {
   const { businessId, businesses } = useFilter();
   const { data, loading } = useQuery<{ products: Product[] }>(PRODUCTS, { variables: { businessId } });
   const [create, { loading: saving }] = useMutation(CREATE_PRODUCT, { refetchQueries: ["Products"] });
+  const [remove] = useMutation(REMOVE_PRODUCT, { refetchQueries: ["Products"] });
 
   const [forBusiness, setForBusiness] = useState(businessId ?? "");
   const [name, setName] = useState("");
@@ -41,7 +43,10 @@ export default function Products() {
             <Body bold>{p.name}</Body>
             <Body>{formatIDR(p.price)}</Body>
           </Row>
-          <Muted>{p.businessName}</Muted>
+          <Row style={{ justifyContent: "space-between" }}>
+            <Muted>{p.businessName}</Muted>
+            <Button small variant="ghost" title="Remove" onPress={() => confirmRemove(p.name, () => remove({ variables: { id: p.id } }))} />
+          </Row>
         </Card>
       ))}
 

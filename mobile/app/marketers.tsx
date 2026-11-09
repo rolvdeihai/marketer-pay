@@ -2,7 +2,8 @@
 import { useState } from "react";
 import { Text } from "react-native";
 import { useMutation, useQuery } from "@apollo/client/react";
-import { CREATE_MARKETER, MARKETERS } from "@/lib/graphql";
+import { CREATE_MARKETER, MARKETERS, REMOVE_MARKETER } from "@/lib/graphql";
+import { confirmRemove } from "@/lib/dialogs";
 import type { Marketer } from "@/lib/types";
 import { useFilter } from "@/context/FilterContext";
 import { FilterBar } from "@/components/FilterBar";
@@ -12,6 +13,7 @@ export default function Marketers() {
   const { businessId, businesses } = useFilter();
   const { data, loading } = useQuery<{ marketers: Marketer[] }>(MARKETERS, { variables: { businessId } });
   const [create, { loading: saving }] = useMutation(CREATE_MARKETER, { refetchQueries: ["Marketers", "Payroll", "Dashboard"] });
+  const [remove] = useMutation(REMOVE_MARKETER, { refetchQueries: ["Marketers", "Payroll", "Dashboard"] });
 
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -39,7 +41,10 @@ export default function Marketers() {
       {data && data.marketers.length === 0 && <Empty text="No marketers for this filter." />}
       {data?.marketers.map((m) => (
         <Card key={m.id}>
-          <Body bold>{m.name}</Body>
+          <Row style={{ justifyContent: "space-between" }}>
+            <Body bold>{m.name}</Body>
+            <Button small variant="ghost" title="Remove" onPress={() => confirmRemove(m.name, () => remove({ variables: { id: m.id } }))} />
+          </Row>
           <Muted>{m.businesses.map((b) => b.name).join(", ")}{m.phone ? ` · ${m.phone}` : ""}</Muted>
         </Card>
       ))}

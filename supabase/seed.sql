@@ -5,16 +5,16 @@ insert into businesses (name, slug) values
   ('JetNote', 'jetnote');
 
 -- OneClick: Rp100.000 for every 5 sales, 100% bonus whether target met or not
-insert into pay_rules (business_id, base_salary, bonus_type, sales_per_bonus, bonus_amount, bonus_pct_target_met, bonus_pct_target_missed)
-select id, 1500000, 'PER_X_SALES', 5, 100000, 100, 100 from businesses where slug = 'oneclick-smart-resume';
+insert into pay_rules (business_id, base_salary, met_bonus_type, met_sales_per_bonus, met_bonus_amount, bonus_pct_target_met, missed_bonus_type, missed_sales_per_bonus, missed_bonus_amount, bonus_pct_target_missed)
+select id, 1500000, 'PER_X_SALES', 5, 100000, 100, 'PER_X_SALES', 5, 100000, 100 from businesses where slug = 'oneclick-smart-resume';
 
 -- JetNote: Rp50.000 per sale, 100% bonus whether target met or not
-insert into pay_rules (business_id, base_salary, bonus_type, sales_per_bonus, bonus_amount, bonus_pct_target_met, bonus_pct_target_missed)
-select id, 1000000, 'PER_SALE', 1, 50000, 100, 100 from businesses where slug = 'jetnote';
+insert into pay_rules (business_id, base_salary, met_bonus_type, met_sales_per_bonus, met_bonus_amount, bonus_pct_target_met, missed_bonus_type, missed_sales_per_bonus, missed_bonus_amount, bonus_pct_target_missed)
+select id, 1000000, 'PER_SALE', 1, 50000, 100, 'PER_SALE', 1, 50000, 100 from businesses where slug = 'jetnote';
 
 -- InstructJet: example of a stricter rule — only 50% of the bonus if the target is missed
-insert into pay_rules (business_id, base_salary, bonus_type, sales_per_bonus, bonus_amount, bonus_pct_target_met, bonus_pct_target_missed)
-select id, 2000000, 'PER_SALE', 1, 75000, 100, 50 from businesses where slug = 'instructjet';
+insert into pay_rules (business_id, base_salary, met_bonus_type, met_sales_per_bonus, met_bonus_amount, bonus_pct_target_met, missed_bonus_type, missed_sales_per_bonus, missed_bonus_amount, bonus_pct_target_missed)
+select id, 2000000, 'PER_SALE', 1, 75000, 100, 'PER_SALE', 1, 75000, 50 from businesses where slug = 'instructjet';
 
 -- Products
 insert into products (business_id, name, price)

@@ -46,6 +46,15 @@ func (r *mutationResolver) UpdatePayRule(ctx context.Context, businessID string,
 	return b, nil
 }
 
+func (r *mutationResolver) RemoveBusiness(ctx context.Context, id string) (model.RemoveResult, error) {
+	res, err := r.Store.RemoveBusiness(ctx, id)
+	if err != nil {
+		return "", err
+	}
+	r.Cache.Bump(ctx, cache.NSBusiness, cache.NSSales)
+	return res, nil
+}
+
 func (r *mutationResolver) CreateMarketer(ctx context.Context, input model.MarketerInput) (*model.Marketer, error) {
 	if strings.TrimSpace(input.Name) == "" {
 		return nil, errors.New("name is required")
@@ -61,11 +70,24 @@ func (r *mutationResolver) CreateMarketer(ctx context.Context, input model.Marke
 	return m, nil
 }
 
+func (r *mutationResolver) RemoveMarketer(ctx context.Context, id string) (model.RemoveResult, error) {
+	res, err := r.Store.RemoveMarketer(ctx, id)
+	if err != nil {
+		return "", err
+	}
+	r.Cache.Bump(ctx, cache.NSSales)
+	return res, nil
+}
+
 func (r *mutationResolver) CreateProduct(ctx context.Context, input model.ProductInput) (*model.Product, error) {
 	if strings.TrimSpace(input.Name) == "" || input.Price < 0 {
 		return nil, errors.New("name is required and price can't be negative")
 	}
 	return r.Store.CreateProduct(ctx, input)
+}
+
+func (r *mutationResolver) RemoveProduct(ctx context.Context, id string) (model.RemoveResult, error) {
+	return r.Store.RemoveProduct(ctx, id)
 }
 
 func (r *mutationResolver) CreateTransaction(ctx context.Context, input model.TransactionInput) (*model.Transaction, error) {

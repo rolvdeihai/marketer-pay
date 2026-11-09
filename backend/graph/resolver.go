@@ -23,21 +23,29 @@ type Resolver struct {
 	AI    *aiclient.Client
 }
 
+func bonusFromInput(in *model.BonusRuleInput) payroll.Bonus {
+	if in == nil {
+		return payroll.Bonus{}
+	}
+	return payroll.Bonus{Type: string(in.BonusType), SalesPerBonus: in.SalesPerBonus, Amount: in.BonusAmount, Pct: in.BonusPct}
+}
+
+func bonusFromModel(in *model.BonusRule) payroll.Bonus {
+	if in == nil {
+		return payroll.Bonus{}
+	}
+	return payroll.Bonus{Type: string(in.BonusType), SalesPerBonus: in.SalesPerBonus, Amount: in.BonusAmount, Pct: in.BonusPct}
+}
+
 func ruleFromInput(in *model.PayRuleInput) payroll.Rule {
 	if in == nil {
 		return payroll.Rule{}
 	}
-	return payroll.Rule{
-		BaseSalary: in.BaseSalary, BonusType: string(in.BonusType), SalesPerBonus: in.SalesPerBonus,
-		BonusAmount: in.BonusAmount, PctTargetMet: in.BonusPctTargetMet, PctTargetMissed: in.BonusPctTargetMissed,
-	}
+	return payroll.Rule{BaseSalary: in.BaseSalary, Met: bonusFromInput(in.TargetMet), Missed: bonusFromInput(in.TargetMissed)}
 }
 
 func ruleFromModel(in *model.PayRule) payroll.Rule {
-	return payroll.Rule{
-		BaseSalary: in.BaseSalary, BonusType: string(in.BonusType), SalesPerBonus: in.SalesPerBonus,
-		BonusAmount: in.BonusAmount, PctTargetMet: in.BonusPctTargetMet, PctTargetMissed: in.BonusPctTargetMissed,
-	}
+	return payroll.Rule{BaseSalary: in.BaseSalary, Met: bonusFromModel(in.TargetMet), Missed: bonusFromModel(in.TargetMissed)}
 }
 
 func strOr(s *string, fallback string) string {

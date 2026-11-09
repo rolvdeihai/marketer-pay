@@ -62,13 +62,19 @@ func (s *Store) CreateTransaction(ctx context.Context, in model.TransactionInput
 	// 1. Product must belong to the business; its price is the default amount.
 	var price int64
 	if err := s.pool.QueryRow(ctx,
-		`select price from products where id = $1::uuid and business_id = $2::uuid`,
+		`select p.price from products p join businesses b on b.id = p.business_id
+		 where p.id = $1::uuid and p.business_id = $2::uuid and p.active and b.active`,
 		in.ProductID, in.BusinessID).Scan(&price); err != nil {
-		return nil, errors.New("product not found in this business")
+		return nil, errors.New("product not found in this business (it may be archived)")
 	}
-	// 2. Marketer must sell for this business.
+	// 2. Marketer must sell for this business and not be archived.
 	if _, err := s.MarketerName(ctx, in.MarketerID, in.BusinessID); err != nil {
 		return nil, errors.New("marketer is not assigned to this business")
+	}
+	if ok, err := s.ActiveMarketer(ctx, in.MarketerID); err != nil {
+		return nil, err
+	} else if !ok {
+		return nil, errors.New("this marketer is archived")
 	}
 
 	amount := price

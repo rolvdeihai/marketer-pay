@@ -1,14 +1,24 @@
 // mobile/src/lib/types.ts
 export type BonusType = "PER_SALE" | "PER_X_SALES";
 
-export type PayRule = {
-  baseSalary: number;
+/** How the bonus is counted for one outcome (target met or missed). */
+export type BonusRule = {
   bonusType: BonusType;
   salesPerBonus: number;
   bonusAmount: number;
-  bonusPctTargetMet: number;
-  bonusPctTargetMissed: number;
+  /** % of the counted bonus that is paid out. */
+  bonusPct: number;
 };
+
+export type PayRule = {
+  /** Paid only when the target is achieved. */
+  baseSalary: number;
+  targetMet: BonusRule;
+  targetMissed: BonusRule;
+};
+
+/** DELETED = removed for good; ARCHIVED = had history, so it was hidden instead. */
+export type RemoveResult = "DELETED" | "ARCHIVED";
 
 export type Business = { id: string; name: string; slug: string; rule: PayRule };
 export type BusinessRef = { id: string; name: string };

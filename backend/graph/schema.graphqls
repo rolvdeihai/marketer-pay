@@ -10,15 +10,20 @@ enum BonusType {
   PER_X_SALES
 }
 
-type PayRule {
-  baseSalary: Int64!
+"How the bonus is counted for one outcome (target met or target missed)."
+type BonusRule {
   bonusType: BonusType!
   salesPerBonus: Int!
   bonusAmount: Int64!
-  "Percent of the bonus paid when the target IS achieved (salary is also paid)."
-  bonusPctTargetMet: Int!
-  "Percent of the bonus paid when the target is NOT achieved (no salary)."
-  bonusPctTargetMissed: Int!
+  "Percent of the counted bonus that is paid out."
+  bonusPct: Int!
+}
+
+type PayRule {
+  "Paid only when the target is achieved."
+  baseSalary: Int64!
+  targetMet: BonusRule!
+  targetMissed: BonusRule!
 }
 
 type Business {
@@ -119,6 +124,15 @@ type Payout {
   paidBy: String
 }
 
+"""
+DELETED when the row had no history and was removed for good;
+ARCHIVED when it has sales/payouts, so it was hidden instead.
+"""
+enum RemoveResult {
+  DELETED
+  ARCHIVED
+}
+
 type AssistantReply {
   text: String!
   "A complete standalone HTML document (chart) or null."
@@ -126,13 +140,17 @@ type AssistantReply {
 }
 
 # ---------- Inputs ----------
-input PayRuleInput {
-  baseSalary: Int64!
+input BonusRuleInput {
   bonusType: BonusType!
   salesPerBonus: Int!
   bonusAmount: Int64!
-  bonusPctTargetMet: Int!
-  bonusPctTargetMissed: Int!
+  bonusPct: Int!
+}
+
+input PayRuleInput {
+  baseSalary: Int64!
+  targetMet: BonusRuleInput!
+  targetMissed: BonusRuleInput!
 }
 
 input BusinessInput {
@@ -198,8 +216,14 @@ type Query {
 type Mutation {
   createBusiness(input: BusinessInput!): Business!
   updatePayRule(businessId: ID!, input: PayRuleInput!): Business!
+  "Deletes the business, or archives it if it has sales or payouts."
+  removeBusiness(id: ID!): RemoveResult!
   createMarketer(input: MarketerInput!): Marketer!
+  "Deletes the marketer, or archives them if they have sales or payouts."
+  removeMarketer(id: ID!): RemoveResult!
   createProduct(input: ProductInput!): Product!
+  "Deletes the product, or archives it if it has sales."
+  removeProduct(id: ID!): RemoveResult!
   createTransaction(input: TransactionInput!): Transaction!
   deleteTransaction(id: ID!): Boolean!
   payMarketer(input: PayInput!): Payout!

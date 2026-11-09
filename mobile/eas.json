@@ -1,0 +1,22 @@
+{
+  "cli": { "version": ">= 16.0.0", "appVersionSource": "remote" },
+  "build": {
+    "preview": {
+      "distribution": "internal",
+      "android": { "buildType": "apk" },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://marketer-pay-backend.vercel.app/",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://biohpmuwceoieoretlvj.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_46snUSpayPlzqTCcdkLSiQ_GtLDTo59"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://marketer-pay-backend.vercel.app/",
+        "EXPO_PUBLIC_SUPABASE_URL": "https://biohpmuwceoieoretlvj.supabase.co",
+        "EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_46snUSpayPlzqTCcdkLSiQ_GtLDTo59"
+      }
+    }
+  }
+}

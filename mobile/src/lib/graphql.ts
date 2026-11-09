@@ -3,13 +3,16 @@ import { gql } from "@apollo/client";
 
 // The operation NAMES (Businesses, Dashboard, ...) are what refetchQueries refers to.
 
+const BONUS_FIELDS = `bonusType salesPerBonus bonusAmount bonusPct`;
+const RULE_FIELDS = `rule { baseSalary targetMet { ${BONUS_FIELDS} } targetMissed { ${BONUS_FIELDS} } }`;
+
 export const BUSINESSES = gql`
   query Businesses {
     businesses {
       id
       name
       slug
-      rule { baseSalary bonusType salesPerBonus bonusAmount bonusPctTargetMet bonusPctTargetMissed }
+      ${RULE_FIELDS}
     }
   }
 `;
@@ -73,17 +76,29 @@ export const CREATE_BUSINESS = gql`
 export const UPDATE_PAY_RULE = gql`
   mutation UpdatePayRule($businessId: ID!, $input: PayRuleInput!) {
     updatePayRule(businessId: $businessId, input: $input) {
-      id name rule { baseSalary bonusType salesPerBonus bonusAmount bonusPctTargetMet bonusPctTargetMissed }
+      id name ${RULE_FIELDS}
     }
   }
+`;
+
+export const REMOVE_BUSINESS = gql`
+  mutation RemoveBusiness($id: ID!) { removeBusiness(id: $id) }
 `;
 
 export const CREATE_MARKETER = gql`
   mutation CreateMarketer($input: MarketerInput!) { createMarketer(input: $input) { id name } }
 `;
 
+export const REMOVE_MARKETER = gql`
+  mutation RemoveMarketer($id: ID!) { removeMarketer(id: $id) }
+`;
+
 export const CREATE_PRODUCT = gql`
   mutation CreateProduct($input: ProductInput!) { createProduct(input: $input) { id name } }
+`;
+
+export const REMOVE_PRODUCT = gql`
+  mutation RemoveProduct($id: ID!) { removeProduct(id: $id) }
 `;
 
 export const CREATE_TRANSACTION = gql`

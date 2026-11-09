@@ -51,7 +51,11 @@ export function makeTools(businessId: string | null) {
     async () => {
       let q = supabase
         .from("businesses")
-        .select("id, name, pay_rules(base_salary, bonus_type, sales_per_bonus, bonus_amount, bonus_pct_target_met, bonus_pct_target_missed)");
+        .select(
+          "id, name, active, pay_rules(base_salary, " +
+            "met_bonus_type, met_sales_per_bonus, met_bonus_amount, bonus_pct_target_met, " +
+            "missed_bonus_type, missed_sales_per_bonus, missed_bonus_amount, bonus_pct_target_missed)",
+        );
       if (businessId) q = q.eq("id", businessId);
       const { data, error } = await q;
       if (error) return `Error: ${error.message}`;
@@ -60,8 +64,9 @@ export function makeTools(businessId: string | null) {
     {
       name: "get_business_rules",
       description:
-        "Pay rules per business: base salary (paid only if target achieved), bonus type " +
-        "(PER_SALE or PER_X_SALES), bonus amount, and bonus % when target met / missed.",
+        "Pay rules per business: base salary (paid only if target achieved), then a separate bonus " +
+        "for target met (met_*) and target missed (missed_*): type (PER_SALE or PER_X_SALES), " +
+        "sales per bonus, bonus amount, and % of that bonus paid. active=false means archived.",
       schema: z.object({}),
     },
   );

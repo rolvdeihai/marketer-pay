@@ -23,11 +23,19 @@
     },
     "web": {
       "favicon": "./assets/favicon.png",
-      "bundler": "metro", "output": "single"
+      "bundler": "metro",
+      "output": "single"
     },
     "plugins": [
       "expo-router",
-      "expo-status-bar"
-    ]
+      "expo-status-bar",
+      "expo-font"
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "e506a176-8e23-47e9-adf6-301c8507781a"
+      }
+    }
   }
 }

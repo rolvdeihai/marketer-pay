@@ -9,11 +9,13 @@ import (
 )
 
 // listMarketers optionally filters by business and/or a single marketer id.
+// Archived (inactive) marketers are left out.
 func (s *Store) listMarketers(ctx context.Context, businessID, marketerID any) ([]*model.Marketer, error) {
 	rows, err := s.pool.Query(ctx, `
 select m.id::text, m.name, m.phone, m.active
 from marketers m
-where ($2::uuid is null or m.id = $2::uuid)
+where m.active
+  and ($2::uuid is null or m.id = $2::uuid)
   and ($1::uuid is null or exists (
         select 1 from marketer_businesses mb
         where mb.marketer_id = m.id and mb.business_id = $1::uuid))
@@ -42,6 +44,7 @@ order by m.name`, businessID, marketerID)
 select mb.marketer_id::text, b.id::text, b.name
 from marketer_businesses mb
 join businesses b on b.id = mb.business_id
+where b.active
 order by b.name`)
 	if err != nil {
 		return nil, err
@@ -91,6 +94,21 @@ func (s *Store) CreateMarketer(ctx context.Context, in model.MarketerInput) (*mo
 		return nil, ErrNotFound
 	}
 	return list[0], nil
+}
+
+// RemoveMarketer deletes the marketer, or archives them (active = false) if
+// they have sales or payouts.
+func (s *Store) RemoveMarketer(ctx context.Context, id string) (model.RemoveResult, error) {
+	return s.deleteOrArchive(ctx,
+		`delete from marketers where id = $1::uuid`,
+		`update marketers set active = false where id = $1::uuid`, id)
+}
+
+// ActiveMarketer reports whether the marketer exists and isn't archived.
+func (s *Store) ActiveMarketer(ctx context.Context, id string) (bool, error) {
+	var ok bool
+	err := s.pool.QueryRow(ctx, `select exists(select 1 from marketers where id = $1::uuid and active)`, id).Scan(&ok)
+	return ok, err
 }
 
 // MarketerName also verifies the marketer belongs to the business.

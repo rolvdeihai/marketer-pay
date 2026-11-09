@@ -11,15 +11,25 @@ const (
 	PerXSales = "PER_X_SALES"
 )
 
+// Bonus is how the bonus is counted for ONE outcome (target met or missed).
+//
+//	PER_SALE:     raw = sales × Amount
+//	PER_X_SALES:  raw = floor(sales / SalesPerBonus) × Amount
+//
+// Pct% of raw is then paid out.
+type Bonus struct {
+	Type          string `json:"type"`
+	SalesPerBonus int    `json:"salesPerBonus"`
+	Amount        int64  `json:"amount"`
+	Pct           int    `json:"pct"`
+}
+
 // Rule is a plain copy of a business's pay settings. It has no database or
 // GraphQL dependencies, which makes the math trivial to unit-test.
 type Rule struct {
-	BaseSalary      int64  `json:"baseSalary"`
-	BonusType       string `json:"bonusType"`
-	SalesPerBonus   int    `json:"salesPerBonus"`
-	BonusAmount     int64  `json:"bonusAmount"`
-	PctTargetMet    int    `json:"pctTargetMet"`
-	PctTargetMissed int    `json:"pctTargetMissed"`
+	BaseSalary int64 `json:"baseSalary"`
+	Met        Bonus `json:"targetMet"`
+	Missed     Bonus `json:"targetMissed"`
 }
 
 type Result struct {
@@ -30,51 +40,66 @@ type Result struct {
 	Total      int64
 }
 
-// Calculate applies the business rules:
-//   - target achieved:  base salary + bonus × pctTargetMet%
-//   - target missed:    bonus × pctTargetMissed%   (no salary)
-func Calculate(r Rule, sales int, targetAchieved bool) Result {
-	var raw int64
-	switch r.BonusType {
-	case PerXSales:
-		if r.SalesPerBonus > 0 {
-			raw = int64(sales/r.SalesPerBonus) * r.BonusAmount // integer division = floor
+func (b Bonus) raw(sales int) int64 {
+	if b.Type == PerXSales {
+		if b.SalesPerBonus < 1 {
+			return 0
 		}
-	default: // PerSale
-		raw = int64(sales) * r.BonusAmount
+		return int64(sales/b.SalesPerBonus) * b.Amount // integer division = floor
 	}
+	return int64(sales) * b.Amount
+}
 
-	res := Result{BonusRaw: raw}
+// Calculate applies the business rules:
+//   - target achieved:  base salary + "met" bonus × its %
+//   - target missed:    "missed" bonus × its %   (no salary)
+func Calculate(r Rule, sales int, targetAchieved bool) Result {
+	b := r.Missed
+	var res Result
 	if targetAchieved {
+		b = r.Met
 		res.BaseSalary = r.BaseSalary
-		res.BonusPct = r.PctTargetMet
-	} else {
-		res.BonusPct = r.PctTargetMissed
 	}
-	res.BonusFinal = raw * int64(res.BonusPct) / 100
+	res.BonusRaw = b.raw(sales)
+	res.BonusPct = b.Pct
+	res.BonusFinal = res.BonusRaw * int64(b.Pct) / 100
 	res.Total = res.BaseSalary + res.BonusFinal
 	return res
 }
 
-func (r Rule) Validate() error {
+func (b Bonus) validate(label string) error {
 	switch {
-	case r.BonusType != PerSale && r.BonusType != PerXSales:
-		return errors.New("bonus type must be PER_SALE or PER_X_SALES")
-	case r.BonusType == PerXSales && r.SalesPerBonus < 1:
-		return errors.New("sales per bonus must be at least 1")
-	case r.BaseSalary < 0 || r.BonusAmount < 0:
-		return errors.New("amounts cannot be negative")
-	case r.PctTargetMet < 0 || r.PctTargetMet > 1000 || r.PctTargetMissed < 0 || r.PctTargetMissed > 1000:
-		return errors.New("percentages must be between 0 and 1000")
+	case b.Type != PerSale && b.Type != PerXSales:
+		return fmt.Errorf("%s: bonus type must be PER_SALE or PER_X_SALES", label)
+	case b.Type == PerXSales && b.SalesPerBonus < 1:
+		return fmt.Errorf("%s: sales per bonus must be at least 1", label)
+	case b.Amount < 0:
+		return fmt.Errorf("%s: bonus amount cannot be negative", label)
+	case b.Pct < 0 || b.Pct > 1000:
+		return fmt.Errorf("%s: percentage must be between 0 and 1000", label)
 	}
 	return nil
 }
 
-func (r Rule) Summary() string {
-	bonus := fmt.Sprintf("Rp%d per sale", r.BonusAmount)
-	if r.BonusType == PerXSales {
-		bonus = fmt.Sprintf("Rp%d per %d sales", r.BonusAmount, r.SalesPerBonus)
+func (r Rule) Validate() error {
+	if r.BaseSalary < 0 {
+		return errors.New("base salary cannot be negative")
 	}
-	return fmt.Sprintf("%s · salary Rp%d if target met · bonus %d%% if met / %d%% if missed",
-		bonus, r.BaseSalary, r.PctTargetMet, r.PctTargetMissed)
+	if err := r.Met.validate("target achieved"); err != nil {
+		return err
+	}
+	return r.Missed.validate("target missed")
+}
+
+func (b Bonus) summary() string {
+	s := fmt.Sprintf("Rp%d per sale", b.Amount)
+	if b.Type == PerXSales {
+		s = fmt.Sprintf("Rp%d per %d sales", b.Amount, b.SalesPerBonus)
+	}
+	return fmt.Sprintf("%s at %d%%", s, b.Pct)
+}
+
+func (r Rule) Summary() string {
+	return fmt.Sprintf("Target met: salary Rp%d + %s · Target missed: %s",
+		r.BaseSalary, r.Met.summary(), r.Missed.summary())
 }

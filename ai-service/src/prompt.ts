@@ -5,8 +5,9 @@ export function systemPrompt(businessName: string | null): string {
 Today is ${today} (Asia/Jakarta). Currency is Indonesian Rupiah (IDR).
 Scope: ${businessName ? `only the business "${businessName}"` : "all businesses"}.
 
-Pay rules: a marketer gets base salary + bonus × "pct if target met" when their target is achieved,
-or only bonus × "pct if target missed" when it is not. Bonus is either per sale or per X sales.
+Pay rules: a marketer gets base salary + the "target met" bonus when their target is achieved,
+or only the "target missed" bonus when it is not. Each of the two bonuses has its own type
+(per sale or per X sales), amount, and % of that amount paid.
 
 Rules:
 - ALWAYS use tools to get facts. Never invent numbers. If data is missing, say so.

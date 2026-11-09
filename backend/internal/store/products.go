@@ -3,6 +3,7 @@ package store
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"marketerpay/graph/model"
@@ -13,7 +14,7 @@ func (s *Store) ListProducts(ctx context.Context, businessID *string) ([]*model.
 select p.id::text, p.business_id::text, b.name, p.name, p.price
 from products p
 join businesses b on b.id = p.business_id
-where $1::uuid is null or p.business_id = $1::uuid
+where p.active and b.active and ($1::uuid is null or p.business_id = $1::uuid)
 order by b.name, p.name`, nullable(businessID))
 	if err != nil {
 		return nil, err
@@ -40,7 +41,17 @@ with ins as (
 select ins.id::text, b.name from ins join businesses b on b.id = ins.business_id`,
 		in.BusinessID, p.Name, in.Price).Scan(&p.ID, &p.BusinessName)
 	if err != nil {
+		if isUniqueViolation(err) {
+			return nil, errors.New("that business already has a product with this name")
+		}
 		return nil, err
 	}
 	return p, nil
+}
+
+// RemoveProduct deletes the product, or archives it if it has sales.
+func (s *Store) RemoveProduct(ctx context.Context, id string) (model.RemoveResult, error) {
+	return s.deleteOrArchive(ctx,
+		`delete from products where id = $1::uuid`,
+		`update products set active = false where id = $1::uuid`, id)
 }

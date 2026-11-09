@@ -9,19 +9,26 @@ create type bonus_type as enum ('PER_SALE', 'PER_X_SALES');
 -- ---------- Businesses & pay rules ----------
 create table businesses (
   id          uuid primary key default gen_random_uuid(),
-  name        text not null unique,
-  slug        text not null unique,
+  name        text not null,
+  slug        text not null,
+  active      boolean not null default true,   -- false = archived (kept for history)
   created_at  timestamptz not null default now()
 );
+create unique index businesses_name_active_key on businesses (name) where active;
+create unique index businesses_slug_active_key on businesses (slug) where active;
 
 -- One rule per business (1:1). Money is stored in whole rupiah as BIGINT.
+-- The bonus is configured separately for "target met" and "target missed".
 create table pay_rules (
   business_id              uuid primary key references businesses(id) on delete cascade,
   base_salary              bigint not null default 0 check (base_salary >= 0),
-  bonus_type               bonus_type not null default 'PER_SALE',
-  sales_per_bonus          int    not null default 1 check (sales_per_bonus >= 1),
-  bonus_amount             bigint not null default 0 check (bonus_amount >= 0),
+  met_bonus_type           bonus_type not null default 'PER_SALE',
+  met_sales_per_bonus      int    not null default 1 check (met_sales_per_bonus >= 1),
+  met_bonus_amount         bigint not null default 0 check (met_bonus_amount >= 0),
   bonus_pct_target_met     int    not null default 100 check (bonus_pct_target_met between 0 and 1000),
+  missed_bonus_type        bonus_type not null default 'PER_SALE',
+  missed_sales_per_bonus   int    not null default 1 check (missed_sales_per_bonus >= 1),
+  missed_bonus_amount      bigint not null default 0 check (missed_bonus_amount >= 0),
   bonus_pct_target_missed  int    not null default 100 check (bonus_pct_target_missed between 0 and 1000),
   updated_at               timestamptz not null default now()
 );
@@ -48,9 +55,10 @@ create table products (
   business_id  uuid not null references businesses(id) on delete cascade,
   name         text not null,
   price        bigint not null default 0 check (price >= 0),
-  created_at   timestamptz not null default now(),
-  unique (business_id, name)
+  active       boolean not null default true,   -- false = archived (kept for history)
+  created_at   timestamptz not null default now()
 );
+create unique index products_business_name_active_key on products (business_id, name) where active;
 
 -- ---------- Transactions (sales) ----------
 create table transactions (

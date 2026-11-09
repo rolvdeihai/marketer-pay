@@ -23,15 +23,18 @@ export function FilterProvider({ children }: { children: ReactNode }) {
   const [businessId, setBusinessId] = useState<string | null>(null);
   const [period, setPeriod] = useState(currentPeriod());
   const { data, loading } = useQuery<{ businesses: Business[] }>(BUSINESSES, { skip: !session });
+  const businesses = data?.businesses ?? [];
+  // If the selected business was removed/archived, fall back to "All businesses".
+  const selected = data && businessId && !businesses.some((b) => b.id === businessId) ? null : businessId;
 
   return (
     <FilterContext.Provider
       value={{
-        businessId,
+        businessId: selected,
         setBusinessId,
         period,
         setPeriod,
-        businesses: data?.businesses ?? [],
+        businesses,
         loadingBusinesses: loading,
       }}
     >

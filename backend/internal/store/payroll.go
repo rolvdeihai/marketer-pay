@@ -16,7 +16,8 @@ with members as (
   select mb.marketer_id, mb.business_id
   from marketer_businesses mb
   join marketers m on m.id = mb.marketer_id
-  where m.active and ($1::uuid is null or mb.business_id = $1::uuid)
+  join businesses b on b.id = mb.business_id
+  where m.active and b.active and ($1::uuid is null or mb.business_id = $1::uuid)
 ),
 sales as (
   select marketer_id, business_id, count(*)::int as cnt, coalesce(sum(amount), 0)::bigint as revenue

@@ -21,6 +21,22 @@ type AssistantReply struct {
 	HTML *string `json:"html,omitempty"`
 }
 
+// How the bonus is counted for one outcome (target met or target missed).
+type BonusRule struct {
+	BonusType     BonusType `json:"bonusType"`
+	SalesPerBonus int       `json:"salesPerBonus"`
+	BonusAmount   int64     `json:"bonusAmount"`
+	// Percent of the counted bonus that is paid out.
+	BonusPct int `json:"bonusPct"`
+}
+
+type BonusRuleInput struct {
+	BonusType     BonusType `json:"bonusType"`
+	SalesPerBonus int       `json:"salesPerBonus"`
+	BonusAmount   int64     `json:"bonusAmount"`
+	BonusPct      int       `json:"bonusPct"`
+}
+
 type Business struct {
 	ID        string    `json:"id"`
 	Name      string    `json:"name"`
@@ -93,23 +109,16 @@ type PayInput struct {
 }
 
 type PayRule struct {
-	BaseSalary    int64     `json:"baseSalary"`
-	BonusType     BonusType `json:"bonusType"`
-	SalesPerBonus int       `json:"salesPerBonus"`
-	BonusAmount   int64     `json:"bonusAmount"`
-	// Percent of the bonus paid when the target IS achieved (salary is also paid).
-	BonusPctTargetMet int `json:"bonusPctTargetMet"`
-	// Percent of the bonus paid when the target is NOT achieved (no salary).
-	BonusPctTargetMissed int `json:"bonusPctTargetMissed"`
+	// Paid only when the target is achieved.
+	BaseSalary   int64      `json:"baseSalary"`
+	TargetMet    *BonusRule `json:"targetMet"`
+	TargetMissed *BonusRule `json:"targetMissed"`
 }
 
 type PayRuleInput struct {
-	BaseSalary           int64     `json:"baseSalary"`
-	BonusType            BonusType `json:"bonusType"`
-	SalesPerBonus        int       `json:"salesPerBonus"`
-	BonusAmount          int64     `json:"bonusAmount"`
-	BonusPctTargetMet    int       `json:"bonusPctTargetMet"`
-	BonusPctTargetMissed int       `json:"bonusPctTargetMissed"`
+	BaseSalary   int64           `json:"baseSalary"`
+	TargetMet    *BonusRuleInput `json:"targetMet"`
+	TargetMissed *BonusRuleInput `json:"targetMissed"`
 }
 
 type Payout struct {
@@ -241,6 +250,63 @@ func (e *BonusType) UnmarshalJSON(b []byte) error {
 }
 
 func (e BonusType) MarshalJSON() ([]byte, error) {
+	var buf bytes.Buffer
+	e.MarshalGQL(&buf)
+	return buf.Bytes(), nil
+}
+
+// DELETED when the row had no history and was removed for good;
+// ARCHIVED when it has sales/payouts, so it was hidden instead.
+type RemoveResult string
+
+const (
+	RemoveResultDeleted  RemoveResult = "DELETED"
+	RemoveResultArchived RemoveResult = "ARCHIVED"
+)
+
+var AllRemoveResult = []RemoveResult{
+	RemoveResultDeleted,
+	RemoveResultArchived,
+}
+
+func (e RemoveResult) IsValid() bool {
+	switch e {
+	case RemoveResultDeleted, RemoveResultArchived:
+		return true
+	}
+	return false
+}
+
+func (e RemoveResult) String() string {
+	return string(e)
+}
+
+func (e *RemoveResult) UnmarshalGQL(v any) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = RemoveResult(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid RemoveResult", str)
+	}
+	return nil
+}
+
+func (e RemoveResult) MarshalGQL(w io.Writer) {
+	_, _ = fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+func (e *RemoveResult) UnmarshalJSON(b []byte) error {
+	s, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+	return e.UnmarshalGQL(s)
+}
+
+func (e RemoveResult) MarshalJSON() ([]byte, error) {
 	var buf bytes.Buffer
 	e.MarshalGQL(&buf)
 	return buf.Bytes(), nil
